@@ -1,1 +1,111 @@
-<!doctype html><title>Ninja</title><p>Chargement...</p>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Ninja vs Shurikai — Ziko Games</title>
+<meta name="description" content="Le robot Shurikai mesure ton temps de réaction et vise ta hauteur la plus lente. Pare au bon moment !">
+<style>
+:root{--ink:#2B2340;--paper:#FFF6E8;--accent:#FF6B3D;--sky:#4F7BF0}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:var(--paper);color:var(--ink)}
+main{max-width:760px;margin:0 auto;padding:14px 16px 40px}
+h1{margin:6px 0;font-size:28px}a{color:var(--sky);font-weight:700}
+#wrap{position:relative;border:4px solid var(--ink);border-radius:22px;overflow:hidden;box-shadow:0 6px 0 var(--ink);touch-action:none}
+canvas{display:block;width:100%;height:auto}
+#ui{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(43,35,64,.5);color:#fff;text-align:center;text-shadow:0 3px 0 var(--ink)}
+#ui h2{margin:0;font-size:28px}#ui p{margin:6px 14px;font-weight:700}
+.btn{display:inline-block;background:var(--accent);color:#fff;font-weight:900;font-size:18px;padding:12px 18px;border:4px solid var(--ink);border-radius:16px;box-shadow:0 5px 0 var(--ink);cursor:pointer;margin-top:8px}
+.pads{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
+.pad{background:#3DBE6B;color:#fff;font-weight:900;font-size:20px;text-align:center;padding:18px 0;border:4px solid var(--ink);border-radius:16px;box-shadow:0 5px 0 var(--ink)}
+.pad.on{transform:translateY(4px);box-shadow:0 1px 0 var(--ink);background:#2EA35A}
+small{color:#6B6380}
+</style>
+</head>
+<body>
+<main>
+<a href="./">← Ziko Games</a>
+<h1>🥷 Ninja vs Shurikai</h1>
+<small>Tiens une hauteur pour parer (clavier : J K L ou ← ↓ →). Appuie <b>pile à l'impact</b> pour renvoyer le shuriken. Tenir plusieurs hauteurs vide ton endurance.</small>
+<div id="wrap" style="margin-top:10px">
+  <canvas id="c" width="720" height="380"></canvas>
+  <div id="ui"><h2>NINJA vs SHURIKAI</h2><p id="msg">Le robot mesure ton temps de réaction sur chaque hauteur.</p><span class="btn" id="go">JOUER</span></div>
+</div>
+<div class="pads"><div class="pad" data-l="0">BAS</div><div class="pad" data-l="1">MILIEU</div><div class="pad" data-l="2">HAUT</div></div>
+<p style="text-align:center"><span class="btn" id="share" style="background:#4F7BF0">Partager mon score</span></p>
+</main>
+<script>
+(()=>{
+const cv=document.getElementById('c'),x=cv.getContext('2d'),W=cv.width,H=cv.height;
+const ui=document.getElementById('ui'),msg=document.getElementById('msg'),go=document.getElementById('go');
+const laneY=[H*0.74,H*0.52,H*0.30],names=['BAS','MILIEU','HAUT'];
+let react=[0.3,0.3,0.3];try{const r=JSON.parse(localStorage.getItem('ziko.ninja.react')||'null');if(r&&r.length===3)react=r}catch(e){}
+let best=0;try{best=+localStorage.getItem('ziko.ninja.best')||0}catch(e){}
+const held=[false,false,false],pressT=[-9,-9,-9];
+let st='ready',t,stars,lives,score,stamina,throwT,hp,lvl,taunt,tauntT,last,lastScore=0,shake=0;
+function setHeld(l,v){if(v&&!held[l])pressT[l]=t;held[l]=v;document.querySelectorAll('.pad')[l].classList.toggle('on',v)}
+document.querySelectorAll('.pad').forEach(p=>{const l=+p.dataset.l;
+ p.addEventListener('touchstart',e=>{e.preventDefault();setHeld(l,true)},{passive:false});p.addEventListener('touchend',e=>{e.preventDefault();setHeld(l,false)},{passive:false});
+ p.addEventListener('mousedown',()=>setHeld(l,true));p.addEventListener('mouseup',()=>setHeld(l,false));p.addEventListener('mouseleave',()=>setHeld(l,false));});
+const km={j:0,arrowleft:0,k:1,arrowdown:1,l:2,arrowright:2};
+addEventListener('keydown',e=>{const l=km[e.key.toLowerCase()];if(l!==undefined){e.preventDefault();if(!e.repeat)setHeld(l,true)}});
+addEventListener('keyup',e=>{const l=km[e.key.toLowerCase()];if(l!==undefined)setHeld(l,false)});
+function say(s){taunt=s;tauntT=1.6}
+function slowest(){let b=0;for(let i=1;i<3;i++)if(react[i]>react[b])b=i;return b}
+function reset(){t=0;stars=[];lives=3;score=0;stamina=1;throwT=1.2;hp=6;lvl=1;taunt='';tauntT=0;say('SHURIKAI a mesuré tes réflexes.')}
+function throwOne(l){const chicken=score>=6&&Math.random()<0.12;let sw=-1,to=l;if(lvl>=2&&Math.random()<0.25){sw=W*(0.45+Math.random()*0.1);to=(l+1+Math.floor(Math.random()*2))%3}
+ stars.push({l,x:W*0.82,y:laneY[l],sp:(330+lvl*40)*(chicken?0.7:1),chicken,sw,to,born:t,back:false})}
+function doThrow(){if(lvl>=2&&Math.random()<0.15){say('…RIEN ! Tu as paré du vent.');return}
+ let l=slowest();if(Math.random()<0.35)l=Math.floor(Math.random()*3);throwOne(l);
+ if(lvl>=3&&Math.random()<0.3){throwOne((l+1+Math.floor(Math.random()*2))%3);say('Deux à la fois. Calculé.')}}
+function hitRobo(n){hp-=n;score+=n;shake=6;if(hp<=0){lvl++;hp=6+lvl*2;lives=Math.min(3,lives+1);score+=5;say('SHURIKAI v'+lvl+'.0 — mise à jour des calculs.')}}
+function step(dt){
+ t+=dt;const gc=held.filter(Boolean).length;
+ if(gc===0)stamina=Math.min(1,stamina+dt*0.5);else stamina=Math.max(0,stamina-dt*0.18*gc*gc);
+ throwT-=dt;if(throwT<=0){throwT=Math.max(0.55,1.5-lvl*0.15)+Math.random()*0.4;doThrow()}
+ const sx=W*0.24;
+ for(let i=stars.length-1;i>=0;i--){const s=stars[i];
+  if(s.back){s.x+=s.sp*1.6*dt;if(s.x>=W*0.8){stars.splice(i,1);hitRobo(1)}continue}
+  s.x-=s.sp*dt;if(s.sw>0&&s.x<s.sw){s.sw=-1;s.l=s.to}
+  s.y+=(laneY[s.l]-s.y)*Math.min(1,dt*12);
+  if(s.x<=sx){const blocked=held[s.l]&&stamina>0,perfect=t-pressT[s.l]<0.16;
+   const r=pressT[s.l]>s.born?pressT[s.l]-s.born:1;react[s.l]=react[s.l]*0.7+Math.min(1,r)*0.3;
+   if(s.chicken){stars.splice(i,1);if(blocked||perfect){stamina=Math.max(0,stamina-0.4);say('Tu as paré un poulet en caoutchouc. POUET.')}else score+=1;continue}
+   if(perfect){s.back=true;continue}
+   stars.splice(i,1);
+   if(!blocked){lives--;shake=10;say([names[s.l]+' : '+Math.round(react[s.l]*1000)+' ms. Trop lent.','Prévu.','Toujours en retard en '+names[s.l]+'.'][Math.floor(Math.random()*3)]);
+    if(lives<=0)return die()}}}
+ if(tauntT>0)tauntT-=dt;if(shake>0)shake-=dt*30;
+}
+function die(){st='dead';lastScore=score;if(score>best){best=score;try{localStorage.setItem('ziko.ninja.best',best)}catch(e){}}
+ try{localStorage.setItem('ziko.ninja.react',JSON.stringify(react))}catch(e){}
+ ui.style.display='flex';ui.querySelector('h2').textContent='TOUCHÉ ! '+score+' pts';
+ msg.textContent='Record '+best+'. Ta pire hauteur : '+names[slowest()]+' ('+Math.round(react[slowest()]*1000)+' ms). Je viserai encore là.';go.textContent='REJOUER'}
+function face(cx,cy,r,col,lookX,lookY,robot){x.lineWidth=4;x.strokeStyle='#2B2340';x.fillStyle=col;
+ if(robot){x.beginPath();x.roundRect(cx-r,cy-r,r*2,r*2,12);x.fill();x.stroke()}else{x.beginPath();x.arc(cx,cy,r,0,7);x.fill();x.stroke()}
+ const a=Math.atan2(lookY-cy,lookX-cx);for(const d of[-1,1]){const ex=cx+d*r*0.38,ey=cy-r*0.1;x.fillStyle='#fff';x.beginPath();x.arc(ex,ey,r*0.25,0,7);x.fill();x.stroke();x.fillStyle='#2B2340';x.beginPath();x.arc(ex+Math.cos(a)*r*0.1,ey+Math.sin(a)*r*0.1,r*0.11,0,7);x.fill()}}
+function draw(){
+ x.save();if(shake>0)x.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
+ const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#7FD3E8');g.addColorStop(1,'#4F7BF0');x.fillStyle=g;x.fillRect(-20,-20,W+40,H+40);
+ x.fillStyle='#C88C52';x.fillRect(-20,H*0.84,W+40,H);x.strokeStyle='#2B2340';x.lineWidth=4;x.beginPath();x.moveTo(-20,H*0.84);x.lineTo(W+20,H*0.84);x.stroke();
+ for(let i=0;i<3;i++){x.fillStyle='rgba(255,255,255,.25)';x.fillRect(W*0.26,laneY[i]-1,W*0.5,2);
+  x.globalAlpha=held[i]&&stamina>0?1:0.18;x.fillStyle='#9AD8FF';x.beginPath();x.roundRect(W*0.24-7,laneY[i]-27,14,54,7);x.fill();x.stroke();x.globalAlpha=1}
+ const tgt=stars[0]?{x:stars[0].x,y:stars[0].y}:{x:W*0.84,y:H*0.52};
+ face(W*0.15,H*0.52,32,'#33334A',tgt.x,tgt.y,false);x.fillStyle='#E8574A';x.fillRect(W*0.15-34,H*0.52-22,68,9);
+ face(W*0.86,H*0.52,40,'#E0473C',W*0.15,H*0.52,true);
+ for(const s of stars){x.save();x.translate(s.x,s.y);x.rotate(-t*12);x.fillStyle=s.chicken?'#FFE24A':'#ddd';x.strokeStyle='#2B2340';x.lineWidth=3;x.beginPath();
+  if(s.chicken){x.ellipse(0,0,20,13,0,0,7)}else{for(let k=0;k<8;k++){const a=k*Math.PI/4,r=k%2?6:18;k?x.lineTo(Math.cos(a)*r,Math.sin(a)*r):x.moveTo(r,0)}x.closePath()}x.fill();x.stroke();x.restore()}
+ x.fillStyle=stamina>0.3?'#3DBE6B':'#E8574A';x.fillRect(W*0.15-50,H*0.52+44,100*stamina,9);x.strokeRect(W*0.15-50,H*0.52+44,100,9);
+ x.fillStyle='#fff';x.font='bold 18px system-ui';x.textAlign='left';x.lineWidth=5;const hud='❤️'.repeat(Math.max(0,lives))+'  '+score+' pts  ·  robot '+Math.max(0,hp)+'  ·  il vise : '+names[slowest()];
+ x.strokeText(hud,12,26);x.fillText(hud,12,26);
+ if(tauntT>0){x.textAlign='center';x.font='bold 20px system-ui';x.strokeText('« '+taunt+' »',W*0.6,H*0.13);x.fillText('« '+taunt+' »',W*0.6,H*0.13)}
+ x.restore()}
+function loop(now){const dt=Math.min(0.033,(now-(last||now))/1000);last=now;if(st==='play')step(dt);draw();requestAnimationFrame(loop)}
+go.addEventListener('click',()=>{reset();st='play';ui.style.display='none'});
+document.getElementById('share').addEventListener('click',async()=>{const text='J’ai fait '+(lastScore||best)+' points contre le robot Shurikai 🥷 Tu fais mieux ? ';
+ try{if(navigator.share)await navigator.share({title:'Ninja vs Shurikai',text,url:location.href});else{await navigator.clipboard.writeText(text+location.href);document.getElementById('share').textContent='Lien copié !'}}catch(e){}});
+reset();t=0;requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
