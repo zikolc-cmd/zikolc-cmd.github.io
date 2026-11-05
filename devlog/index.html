@@ -1,1 +1,60 @@
-<!doctype html><title>Devlog</title><p>Bientot.</p>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Devlog Ziko Studio</title>
+<meta name="description" content="Le journal de création de Ziko Studio : comment on fabrique des jeux mobiles où l'ennemi calcule tes mouvements.">
+<style>
+:root{--ink:#2B2340;--paper:#FFF6E8;--accent:#FF6B3D;--sky:#4F7BF0;--muted:#6B6380}
+*{box-sizing:border-box}body{margin:0;font-family:Georgia,"Times New Roman",serif;background:var(--paper);color:var(--ink);line-height:1.65}
+header{background:linear-gradient(180deg,#7FD3E8,#4F7BF0);color:#fff;text-align:center;padding:28px 16px;border-bottom:5px solid var(--ink)}
+header h1{margin:0;font-family:system-ui,sans-serif;font-size:36px;text-shadow:0 3px 0 var(--ink)}
+header p{margin:6px 0 0;font-family:system-ui,sans-serif}
+nav{text-align:center;margin:14px 0;font-family:system-ui,sans-serif}
+nav a{color:var(--sky);font-weight:700;margin:0 8px}
+main{max-width:700px;margin:0 auto;padding:0 16px 60px}
+article{background:#fff;border:4px solid var(--ink);border-radius:20px;padding:18px 22px;margin:20px 0;box-shadow:0 6px 0 var(--ink)}
+article h2{font-family:system-ui,sans-serif;margin:0 0 4px;font-size:22px}
+.date{font-family:system-ui,sans-serif;color:var(--muted);font-size:13px;margin-bottom:10px}
+pre{background:var(--ink);color:#F5F1FF;padding:12px;border-radius:12px;overflow-x:auto;font-size:13px}
+.cta{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-family:system-ui,sans-serif;font-weight:900;padding:10px 16px;border:4px solid var(--ink);border-radius:14px;box-shadow:0 4px 0 var(--ink)}
+footer{text-align:center;color:var(--muted);font-family:system-ui,sans-serif;font-size:13px;padding:20px}
+</style>
+</head>
+<body>
+<header><h1>DEVLOG · ZIKO STUDIO</h1><p>Comment on fabrique des jeux où l'ennemi te calcule.</p></header>
+<nav><a href="../games/">Jouer</a><a href="../testeur/">Devenir testeur</a></nav>
+<main>
+
+<article>
+<h2>17 jeux en une soirée : ce que j'ai appris</h2>
+<div class="date">6 novembre 2026</div>
+<p>Hier soir, j'ai lancé un défi un peu fou : créer 20 petits jeux différents, chacun avec son propre ennemi, sa propre icône et sa propre façon de jouer. Pêche, ninja, tir à la corde, toupies, course de voitures… 17 sont déjà installés sur mon téléphone.</p>
+<p>Le secret pour aller aussi vite, c'est un <b>modèle de projet</b> : un dossier de base avec les boutons multi-touch, l'écran de pause, l'écran de défaite et même un script qui dessine l'icône tout seul à chaque compilation. Pour chaque nouveau jeu, il ne reste qu'à écrire le « cerveau » de l'ennemi.</p>
+<p>Ce que je retiens : un jeu simple devient génial dès que l'ennemi <b>te regarde</b> (ses yeux suivent ton personnage) et qu'il <b>te dit ce qu'il a compris</b> de toi.</p>
+</article>
+
+<article>
+<h2>Comment l'ennemi « lit dans tes pensées »</h2>
+<div class="date">6 novembre 2026</div>
+<p>Dans mes jeux, les ennemis ne trichent pas : ils calculent. La technique la plus simple, c'est de viser l'endroit où tu <i>seras</i> plutôt que l'endroit où tu es :</p>
+<pre>positionFuture = position + vitesse × 0,5</pre>
+<p>La deuxième technique, c'est d'apprendre tes habitudes. Dans <b>Pêche</b>, le pêcheur chronomètre combien de temps tu hésites avant de mordre et ferre juste avant. Dans <b>Ninja</b>, le robot mesure ton temps de réaction en bas, au milieu et en haut, et vise toujours ta hauteur la plus lente. Dans <b>Corde</b>, le hérisson mesure ton rythme de tirage et donne son gros coup pile entre deux de tes tirs.</p>
+<pre>habitude = habitude × 0,8 + nouvelleMesure × 0,2</pre>
+<p>Et quand tu perds, il te le dit : « Ton rythme : 280 ms. Trop régulier. » C'est ce qui donne envie de rejouer pour le surprendre.</p>
+<p><a class="cta" href="../games/">Essaie L'Œil qui calcule</a></p>
+</article>
+
+<article>
+<h2>Pourquoi Ziko Troll 4 n'est pas encore sur le Play Store</h2>
+<div class="date">6 novembre 2026</div>
+<p>Sur Google Play, les nouveaux développeurs doivent faire un <b>test fermé avec 12 testeurs pendant 14 jours</b> avant de pouvoir publier pour tout le monde. Ziko Troll 4 en a 6 pour l'instant.</p>
+<p>Si tu as un téléphone Android et 2 minutes, tu peux m'aider à le sortir. Il suffit de garder le jeu installé pendant 14 jours.</p>
+<p><a class="cta" href="../testeur/">Devenir testeur</a></p>
+</article>
+
+</main>
+<footer>Ziko Studio · Belgique · zikolouka@gmail.com</footer>
+</body>
+</html>
