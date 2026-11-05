@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Ziko Games</title>
+<meta name="description" content="Les jeux de Ziko : des jeux qui calculent tes mouvements et se moquent de toi. Joue gratuitement dans ton navigateur.">
+<meta property="og:title" content="Ziko Games — l'IA qui te calcule">
+<meta property="og:description" content="Survis à l'Œil qui prédit tes mouvements. Combien de secondes tu tiens ?">
+<style>
+:root{--ink:#2B2340;--sky1:#7FD3E8;--sky2:#4F7BF0;--sun:#FFD54A;--accent:#FF6B3D;--green:#3DBE6B;--paper:#FFF6E8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--paper)}
+header{background:linear-gradient(180deg,var(--sky1),var(--sky2));padding:26px 16px 34px;text-align:center;color:#fff;border-bottom:5px solid var(--ink);position:relative;overflow:hidden}
+header h1{margin:0;font-size:44px;letter-spacing:1px;text-shadow:0 4px 0 var(--ink)}
+header p{margin:6px 0 0;font-size:17px;font-weight:600}
+.cloud{position:absolute;background:#fff;border-radius:40px;opacity:.85;animation:drift 22s linear infinite}
+@keyframes drift{from{transform:translateX(-160px)}to{transform:translateX(110vw)}}
+main{max-width:760px;margin:0 auto;padding:18px 16px 60px}
+.card{background:#fff;border:4px solid var(--ink);border-radius:22px;padding:16px 18px;margin:18px 0;box-shadow:0 6px 0 var(--ink)}
+.card h2{margin:0 0 6px;font-size:22px}
+.card p{margin:4px 0;line-height:1.45}
+#game{position:relative;border:4px solid var(--ink);border-radius:22px;overflow:hidden;box-shadow:0 6px 0 var(--ink);touch-action:none;background:#9fd8f0}
+canvas{display:block;width:100%;height:auto}
+#ui{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;text-shadow:0 3px 0 var(--ink);pointer-events:none;background:rgba(43,35,64,.5)}
+#ui h3{margin:0;font-size:30px}#ui p{margin:6px 12px;font-size:16px;font-weight:700}
+.btn{display:inline-block;background:var(--accent);color:#fff;font-weight:900;font-size:18px;text-decoration:none;padding:12px 18px;border:4px solid var(--ink);border-radius:16px;box-shadow:0 5px 0 var(--ink);margin:8px 6px 0;cursor:pointer;pointer-events:auto}
+.btn.g{background:var(--green)}.btn.b{background:var(--sky2)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.g1{border:4px solid var(--ink);border-radius:18px;padding:12px;background:#fff;box-shadow:0 5px 0 var(--ink)}
+.g1 b{font-size:18px}.g1 small{display:block;color:#6B6380;margin-top:4px;line-height:1.35}
+.tag{display:inline-block;font-size:12px;font-weight:800;padding:2px 8px;border-radius:10px;border:2px solid var(--ink);margin-bottom:6px}
+.t1{background:var(--sun)}.t2{background:#B9F3C9}.t3{background:#FFD0C2}
+footer{text-align:center;color:#6B6380;font-size:13px;padding:20px}
+</style>
+</head>
+<body>
+<header>
+  <div class="cloud" style="top:20px;width:120px;height:36px;animation-delay:-4s"></div>
+  <div class="cloud" style="top:70px;width:80px;height:26px;animation-delay:-13s"></div>
+  <h1>ZIKO GAMES</h1>
+  <p>Des jeux où l'ennemi calcule tes mouvements… et se moque de toi.</p>
+</header>
+<main>
+  <div class="card">
+    <h2>👁️ L'Œil qui calcule</h2>
+    <p>L'Œil prédit où tu vas être et tire là. Il apprend ton style : si tu fuis toujours du même côté, il le saura. Combien de secondes tu tiens ?</p>
+    <p><b>Ordi :</b> flèches ou ZQSD · <b>Téléphone :</b> glisse ton doigt.</p>
+  </div>
+  <div id="game">
+    <canvas id="c" width="720" height="460"></canvas>
+    <div id="ui"><h3>L'ŒIL QUI CALCULE</h3><p id="msg">Esquive ses lasers prédictifs. Ramasse les pièces.</p><span class="btn" id="go">JOUER</span></div>
+  </div>
+  <p style="text-align:center"><span class="btn b" id="share">Partager mon score</span></p>
+
+  <div class="card">
+    <h2>🎮 Les jeux de Ziko</h2>
+    <div class="grid">
+      <div class="g1"><span class="tag t1">App Store</span><br><b>Ziko Aventure</b><small>Jeu d'aventure en 3D : secrets cachés, missions pour sauver sa sœur et combats contre les méchants. Cherche « Ziko Aventure » sur l'App Store.</small></div>
+      <div class="g1"><span class="tag t2">Bientôt sur Google Play</span><br><b>Ziko Troll 4</b><small>Le jeu de plateforme qui te piège. En test : aide-le à sortir !</small><a class="btn g" href="../testeur/">Devenir testeur</a></div>
+      <div class="g1"><span class="tag t3">En création</span><br><b>Ninja vs Shurikai</b><small>Un robot mesure ton temps de réaction sur chaque hauteur et vise ta plus lente.</small></div>
+      <div class="g1"><span class="tag t3">En création</span><br><b>Pêche</b><small>Tu es le poisson. Le pêcheur chronomètre ton hésitation et ferre juste avant.</small></div>
+      <div class="g1"><span class="tag t3">En création</span><br><b>Corde</b><small>Tir à la corde : le hérisson Brutus place son gros coup pile entre deux de tes tirs.</small></div>
+      <div class="g1"><span class="tag t3">En création</span><br><b>Aspiro</b><small>Un aspirateur géant apprend dans quel sens tu fuis pour te couper la route.</small></div>
+    </div>
+  </div>
+</main>
+<footer>Fait par Louka (Belgique) · Contact : zikolouka@gmail.com</footer>
+<script>
+(()=>{
+const cv=document.getElementById('c'),x=cv.getContext('2d'),W=cv.width,H=cv.height;
+const ui=document.getElementById('ui'),msg=document.getElementById('msg'),go=document.getElementById('go');
+let best=0;try{best=+localStorage.getItem('ziko.oeil.best')||0}catch(e){}
+let bias=0;try{bias=+localStorage.getItem('ziko.oeil.bias')||0}catch(e){}
+const keys={};let touch=null;
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=1;if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase()))e.preventDefault()});
+addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=0});
+function tp(e){const r=cv.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return{x:(t.clientX-r.left)*W/r.width,y:(t.clientY-r.top)*H/r.height}}
+cv.addEventListener('touchstart',e=>{touch=tp(e);e.preventDefault()},{passive:false});
+cv.addEventListener('touchmove',e=>{touch=tp(e);e.preventDefault()},{passive:false});
+cv.addEventListener('touchend',()=>{touch=null});
+cv.addEventListener('mousedown',e=>{touch=tp(e)});cv.addEventListener('mousemove',e=>{if(touch)touch=tp(e)});addEventListener('mouseup',()=>{touch=null});
+let st='ready',p,v,t,score,shots,coins,fireT,lvl,blink,laugh,taunt,tauntT,last,lastAng=0,angVel=0;
+const eye={x:W/2,y:H/2,r:46};
+const taunts=['Calculé.','Tu fuis toujours pareil.','Prévu.','Trop lent !','Je lis dans tes doigts.','HIHI.'];
+function reset(){p={x:W*0.2,y:H*0.5};v={x:0,y:0};t=0;score=0;shots=[];coins=[];fireT=1.2;lvl=1;blink=0;laugh=0;taunt='';tauntT=0;for(let i=0;i<3;i++)coins.push(rc())}
+function rc(){let c;do{c={x:40+Math.random()*(W-80),y:40+Math.random()*(H-80)}}while(Math.hypot(c.x-eye.x,c.y-eye.y)<110);return c}
+function say(s){taunt=s;tauntT=1.6}
+function fire(){
+  // prédiction : position future + biais appris de ton sens de fuite
+  const lead=0.45+lvl*0.04;let tx=p.x+v.x*lead,ty=p.y+v.y*lead;
+  const ang=Math.atan2(ty-eye.y,tx-eye.x)+bias*0.18;
+  const sp=330+lvl*25;
+  shots.push({x:eye.x,y:eye.y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,fake:lvl>=3&&Math.random()<0.15});
+  if(lvl>=2&&Math.random()<0.35){const a2=ang+(Math.random()<0.5?-0.35:0.35);shots.push({x:eye.x,y:eye.y,vx:Math.cos(a2)*sp,vy:Math.sin(a2)*sp,fake:false})}
+}
+function step(dt){
+  t+=dt;lvl=1+Math.floor(t/12);
+  let ax=0,ay=0;
+  if(keys['arrowleft']||keys['q']||keys['a'])ax-=1;if(keys['arrowright']||keys['d'])ax+=1;
+  if(keys['arrowup']||keys['z']||keys['w'])ay-=1;if(keys['arrowdown']||keys['s'])ay+=1;
+  if(touch){const dx=touch.x-p.x,dy=touch.y-p.y,l=Math.hypot(dx,dy);if(l>6){ax=dx/l;ay=dy/l}}
+  v.x+=ax*1500*dt;v.y+=ay*1500*dt;const d=Math.pow(0.004,dt);v.x*=d;v.y*=d;
+  const s=Math.hypot(v.x,v.y),m=300;if(s>m){v.x*=m/s;v.y*=m/s}
+  p.x=Math.max(18,Math.min(W-18,p.x+v.x*dt));p.y=Math.max(18,Math.min(H-18,p.y+v.y*dt));
+  // apprentissage du sens de fuite (horaire / anti-horaire)
+  const a=Math.atan2(p.y-eye.y,p.x-eye.x);let da=a-lastAng;if(da>Math.PI)da-=2*Math.PI;if(da<-Math.PI)da+=2*Math.PI;lastAng=a;angVel=angVel*0.9+(da/dt)*0.1;
+  if(Math.abs(angVel)>0.4)bias=bias*0.997+Math.sign(angVel)*0.003;
+  fireT-=dt;if(fireT<=0){fireT=Math.max(0.45,1.15-lvl*0.08);fire()}
+  for(const sh of shots){sh.x+=sh.vx*dt;sh.y+=sh.vy*dt}
+  shots=shots.filter(s=>s.x>-30&&s.x<W+30&&s.y>-30&&s.y<H+30);
+  for(const sh of shots){if(Math.hypot(sh.x-p.x,sh.y-p.y)<16){if(sh.fake){sh.x=-99;say('Faux laser. Tu as eu peur ?');laugh=0.8}else{return die()}}}
+  if(Math.hypot(p.x-eye.x,p.y-eye.y)<eye.r+14)return die();
+  for(let i=0;i<coins.length;i++){if(Math.hypot(coins[i].x-p.x,coins[i].y-p.y)<22){score+=1;coins[i]=rc();if(Math.random()<0.25)say(['Pièce volée…','Recalcul…','Hmm.'][Math.floor(Math.random()*3)])}}
+  if(tauntT>0)tauntT-=dt;if(laugh>0)laugh-=dt;blink-=dt;if(blink<-3)blink=0.15;
+}
+function die(){
+  st='dead';laugh=2;const sec=t.toFixed(1),total=Math.floor(t)+score*3;
+  if(total>best){best=total;try{localStorage.setItem('ziko.oeil.best',best)}catch(e){}}
+  try{localStorage.setItem('ziko.oeil.bias',bias)}catch(e){}
+  const side=bias>0.1?'dans le sens des aiguilles d’une montre':bias<-0.1?'dans le sens inverse des aiguilles':'sans habitude… pour l’instant';
+  ui.style.display='flex';ui.querySelector('h3').textContent='TOUCHÉ ! '+total+' pts';
+  msg.textContent='Tenu '+sec+' s · '+score+' pièces · record '+best+'. Tu fuis '+side+'. L’Œil s’en souviendra.';
+  go.textContent='REJOUER';lastScore=total;
+}
+let lastScore=0;
+function draw(){
+  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#7FD3E8');g.addColorStop(1,'#4F7BF0');x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.fillStyle='rgba(255,255,255,.7)';for(let i=0;i<4;i++){const cx=((performance.now()/40+i*210)%(W+160))-80;x.beginPath();x.ellipse(cx,60+i*90,60,18,0,0,7);x.fill()}
+  x.fillStyle='#6BCB5A';x.strokeStyle='#2B2340';x.lineWidth=4;x.beginPath();x.ellipse(W*0.25,H+40,260,90,0,0,7);x.fill();x.stroke();x.beginPath();x.ellipse(W*0.8,H+50,240,90,0,0,7);x.fill();x.stroke();
+  for(const c of coins){x.fillStyle='#FFD54A';x.beginPath();x.arc(c.x,c.y,11,0,7);x.fill();x.stroke()}
+  // l'Œil
+  x.fillStyle='#E8574A';x.beginPath();x.arc(eye.x,eye.y,eye.r+10,0,7);x.fill();x.stroke();
+  x.fillStyle='#fff';x.beginPath();x.arc(eye.x,eye.y,eye.r,0,7);x.fill();x.stroke();
+  const la=Math.atan2(p.y-eye.y,p.x-eye.x);x.fillStyle='#2B2340';
+  if(blink>0){x.fillRect(eye.x-eye.r,eye.y-4,eye.r*2,8)}else{x.beginPath();x.arc(eye.x+Math.cos(la)*20,eye.y+Math.sin(la)*20,16,0,7);x.fill();x.fillStyle='#fff';x.beginPath();x.arc(eye.x+Math.cos(la)*20-5,eye.y+Math.sin(la)*20-5,5,0,7);x.fill()}
+  x.strokeStyle='#2B2340';x.lineWidth=6;x.beginPath();x.moveTo(eye.x-44,eye.y-58);x.lineTo(eye.x-8,eye.y-46);x.moveTo(eye.x+44,eye.y-58);x.lineTo(eye.x+8,eye.y-46);x.stroke();
+  if(laugh>0){x.fillStyle='#fff';x.lineWidth=3;x.beginPath();x.ellipse(eye.x,eye.y+eye.r+22,22,10,0,0,Math.PI);x.fill();x.stroke()}
+  for(const s of shots){x.strokeStyle=s.fake?'rgba(255,255,255,.6)':'#FF2E4D';x.lineWidth=8;x.lineCap='round';x.beginPath();x.moveTo(s.x,s.y);x.lineTo(s.x-s.vx*0.05,s.y-s.vy*0.05);x.stroke()}
+  // Ziko
+  x.lineWidth=4;x.strokeStyle='#2B2340';x.fillStyle='#9BE15D';x.beginPath();x.arc(p.x,p.y,16,0,7);x.fill();x.stroke();
+  const pa=Math.atan2(eye.y-p.y,eye.x-p.x);x.fillStyle='#fff';x.beginPath();x.arc(p.x-6,p.y-4,5,0,7);x.arc(p.x+6,p.y-4,5,0,7);x.fill();x.fillStyle='#2B2340';x.beginPath();x.arc(p.x-6+Math.cos(pa)*2,p.y-4+Math.sin(pa)*2,2.4,0,7);x.arc(p.x+6+Math.cos(pa)*2,p.y-4+Math.sin(pa)*2,2.4,0,7);x.fill();
+  x.fillStyle='#fff';x.font='bold 20px system-ui';x.textAlign='left';x.lineWidth=5;x.strokeText(t.toFixed(1)+' s  ·  🪙 '+score+'  ·  niveau '+lvl,14,30);x.fillText(t.toFixed(1)+' s  ·  🪙 '+score+'  ·  niveau '+lvl,14,30);
+  if(tauntT>0){x.textAlign='center';x.font='bold 22px system-ui';x.strokeText('« '+taunt+' »',eye.x,eye.y-80);x.fillText('« '+taunt+' »',eye.x,eye.y-80)}
+}
+function loop(now){const dt=Math.min(0.033,(now-(last||now))/1000);last=now;if(st==='play'){step(dt);if(st==='play'&&Math.random()<0.002)say(taunts[Math.floor(Math.random()*taunts.length)])}draw();requestAnimationFrame(loop)}
+go.addEventListener('click',()=>{reset();st='play';ui.style.display='none'});
+document.getElementById('share').addEventListener('click',async()=>{
+  const text='J’ai fait '+(lastScore||best)+' points contre L’Œil qui calcule 👁️ Tu fais mieux ? ';const url=location.href;
+  try{if(navigator.share){await navigator.share({title:'Ziko Games',text,url})}else{await navigator.clipboard.writeText(text+url);document.getElementById('share').textContent='Lien copié !'}}catch(e){}
+});
+reset();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
