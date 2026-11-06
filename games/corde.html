@@ -1,1 +1,109 @@
-<!doctype html><title>Corde</title><p>Chargement...</p>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Corde vs Brutus — Ziko Games</title>
+<meta name="description" content="Tir à la corde contre Brutus le hérisson : il chronomètre ton rythme et place son gros coup entre deux de tes tirs.">
+<style>
+:root{--ink:#2B2340;--paper:#FFF6E8;--accent:#FF6B3D;--sky:#4F7BF0}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:var(--paper);color:var(--ink)}
+main{max-width:760px;margin:0 auto;padding:14px 16px 40px}
+h1{margin:6px 0;font-size:28px}a{color:var(--sky);font-weight:700}small{color:#6B6380}
+#wrap{position:relative;border:4px solid var(--ink);border-radius:22px;overflow:hidden;box-shadow:0 6px 0 var(--ink);margin-top:10px}
+canvas{display:block;width:100%;height:auto}
+#ui{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(43,35,64,.5);color:#fff;text-align:center;text-shadow:0 3px 0 var(--ink)}
+#ui h2{margin:0;font-size:28px}#ui p{margin:6px 14px;font-weight:700}
+.btn{display:inline-block;background:var(--accent);color:#fff;font-weight:900;font-size:18px;padding:12px 18px;border:4px solid var(--ink);border-radius:16px;box-shadow:0 5px 0 var(--ink);cursor:pointer;margin-top:8px}
+.pads{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.pad{color:#fff;font-weight:900;font-size:22px;text-align:center;padding:24px 0;border:4px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink);touch-action:none}
+.pad.on{transform:translateY(4px);box-shadow:0 1px 0 var(--ink);filter:brightness(.9)}
+</style>
+</head>
+<body>
+<main>
+<a href="./">← Ziko Games</a>
+<h1>🪢 Corde vs Brutus</h1>
+<small>Alterne MAIN G / MAIN D pour tirer (clavier : F et J). Quand Brutus <b>gonfle</b>, tiens les <b>deux</b> en même temps pour t'ancrer. Il chronomètre ton rythme…</small>
+<div id="wrap">
+  <canvas id="c" width="720" height="360"></canvas>
+  <div id="ui"><h2>CORDE vs BRUTUS</h2><p id="msg">Tire-le dans la boue avant qu'il t'y tire !</p><span class="btn" id="go">JOUER</span></div>
+</div>
+<div class="pads"><div class="pad" data-h="0" style="background:#3DBE6B">MAIN G</div><div class="pad" data-h="1" style="background:#FF6B3D">MAIN D</div></div>
+<p style="text-align:center"><span class="btn" id="share" style="background:#4F7BF0">Partager mon score</span></p>
+</main>
+<script>
+(()=>{
+const cv=document.getElementById('c'),x=cv.getContext('2d'),W=cv.width,H=cv.height;
+const ui=document.getElementById('ui'),msg=document.getElementById('msg'),go=document.getElementById('go');
+let best=0;try{best=+localStorage.getItem('ziko.corde.best')||0}catch(e){}
+let anchorRate=0.3;try{anchorRate=+(localStorage.getItem('ziko.corde.anc')||0.3)}catch(e){}
+const held=[false,false];
+let st='ready',t,pos,vel,lastHand,lastPress,interval,inhale,fake,stun,yankAt,nextPlan,released,lives,lvl,score,taunt,tauntT,last,lastScore=0,shake=0,fall=0;
+function say(s){taunt=s;tauntT=1.8}
+function press(h){
+ if(st!=='play')return;
+ if(held[0]&&held[1])return;
+ const d=t-lastPress;if(lastPress>0&&d<1.2)interval=interval*0.85+d*0.15;lastPress=t;
+ if(released>0){pos-=0.02;vel=0;fall=0.4;say('BOUM sur les fesses ! Il a lâché.');return}
+ vel-=(h!==lastHand?0.055:0.012)*4;lastHand=h}
+function setHeld(h,v){if(v&&!held[h]){held[h]=true;press(h)}else held[h]=v;document.querySelectorAll('.pad')[h].classList.toggle('on',held[h])}
+document.querySelectorAll('.pad').forEach(p=>{const h=+p.dataset.h;
+ p.addEventListener('touchstart',e=>{e.preventDefault();setHeld(h,true)},{passive:false});p.addEventListener('touchend',e=>{e.preventDefault();setHeld(h,false)},{passive:false});
+ p.addEventListener('mousedown',()=>setHeld(h,true));p.addEventListener('mouseup',()=>setHeld(h,false));p.addEventListener('mouseleave',()=>setHeld(h,false))});
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if((k==='f'||k==='j')&&!e.repeat){e.preventDefault();setHeld(k==='f'?0:1,true)}});
+addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(k==='f'||k==='j')setHeld(k==='f'?0:1,false)});
+function newRound(){pos=0;vel=0;inhale=0;stun=0;yankAt=-1;nextPlan=2.5;released=0;lastHand=-1}
+function reset(){t=0;lives=3;lvl=1;score=0;lastPress=-9;interval=0.3;newRound();say('BRUTUS a chronométré ton rythme.')}
+function step(dt){
+ t+=dt;const anchored=held[0]&&held[1];
+ if(stun>0)stun-=dt;else if(released<=0)vel+=(0.11+lvl*0.025)*dt*4;
+ nextPlan-=dt;
+ if(nextPlan<=0&&inhale<=0&&stun<=0&&released<=0){
+  nextPlan=Math.max(1.6,3.4-lvl*0.25)+Math.random();
+  const r=Math.random();
+  if(lvl>=2&&r<0.15){released=0.9;say('Oups, j’ai lâché. HIHI.')}
+  else{inhale=0.7;fake=anchorRate>0.5&&Math.random()<0.35;
+   let tt=lastPress+interval*Math.ceil((t+0.7-lastPress)/Math.max(0.1,interval))-interval*0.5;if(tt<t+0.55)tt+=interval;yankAt=tt}}
+ if(released>0)released-=dt;
+ if(inhale>0){inhale-=dt;
+  if(t>=yankAt&&yankAt>0){inhale=0;yankAt=-1;
+   if(fake){say('Faux gonflage. Tu t’es ancré pour rien.');if(anchored)anchorRate=anchorRate*0.8+0.2}
+   else if(anchored){anchorRate=anchorRate*0.8+0.2;stun=1.2;vel-=0.25;score+=2;say(['Bloqué ?! Recalcul…','Tu as lu mon coup…','Impossible !'][Math.floor(Math.random()*3)])}
+   else{anchorRate*=0.8;vel+=0.9;shake=10;say(['Pile entre deux tirs. Calculé.','Ton rythme : '+Math.round(interval*1000)+' ms. Trop régulier.','Prévu.'][Math.floor(Math.random()*3)])}}}
+ vel*=Math.pow(0.02,dt);if(anchored&&stun<=0)vel*=Math.pow(0.001,dt);pos+=vel*dt;
+ if(pos<=-1){score+=5;lvl++;say('BRUTUS manche '+lvl+'. Il recalcule ton rythme.');newRound()}
+ else if(pos>=1){lives--;shake=12;if(lives<=0)return die();say('Dans la boue ! Encore une ?');newRound()}
+ if(tauntT>0)tauntT-=dt;if(shake>0)shake-=dt*30;if(fall>0)fall-=dt}
+function die(){st='dead';lastScore=score;if(score>best){best=score;try{localStorage.setItem('ziko.corde.best',best)}catch(e){}}
+ try{localStorage.setItem('ziko.corde.anc',anchorRate)}catch(e){}
+ ui.style.display='flex';ui.querySelector('h2').textContent='PLOUF ! '+score+' pts';
+ msg.textContent='Record '+best+'. Ton rythme : '+Math.round(interval*1000)+' ms — mon gros coup arrivait pile entre deux.';go.textContent='REJOUER'}
+function blob(cx,cy,r,col,lx,ly,spiky){x.lineWidth=4;x.strokeStyle='#2B2340';x.fillStyle=col;x.beginPath();
+ if(spiky){for(let i=0;i<22;i++){const a=i*Math.PI/11,rr=i%2?r:r*1.22;i?x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr):x.moveTo(cx+rr,cy)}x.closePath()}else x.arc(cx,cy,r,0,7);x.fill();x.stroke();
+ const a=Math.atan2(ly-cy,lx-cx);for(const d of[-1,1]){const ex=cx+d*r*0.36,ey=cy-r*0.12;x.fillStyle='#fff';x.beginPath();x.arc(ex,ey,r*0.24,0,7);x.fill();x.stroke();x.fillStyle='#2B2340';x.beginPath();x.arc(ex+Math.cos(a)*r*0.1,ey+Math.sin(a)*r*0.1,r*0.11,0,7);x.fill()}}
+function draw(){
+ x.save();if(shake>0)x.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
+ const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#7FD3E8');g.addColorStop(1,'#4F7BF0');x.fillStyle=g;x.fillRect(-20,-20,W+40,H+40);
+ x.fillStyle='#6BCB5A';x.fillRect(-20,H*0.72,W+40,H);x.strokeStyle='#2B2340';x.lineWidth=4;x.beginPath();x.moveTo(-20,H*0.72);x.lineTo(W+20,H*0.72);x.stroke();
+ x.fillStyle='#75502E';x.beginPath();x.ellipse(W/2,H*0.74,95,22,0,0,7);x.fill();x.stroke();
+ const off=(pos||0)*W*0.18,baseY=H*0.6;const hx=W*0.22+off,bx=W*0.78+off;const sag=released>0?40:6;
+ x.strokeStyle='#D9B266';x.lineWidth=7;x.lineCap='round';x.beginPath();x.moveTo(hx+30,baseY);x.quadraticCurveTo(W/2+off,baseY+sag,bx-40,baseY);x.stroke();
+ x.fillStyle='#E8574A';x.strokeStyle='#2B2340';x.lineWidth=3;x.fillRect(W/2+off-6,baseY+sag*0.5-12,12,30);x.strokeRect(W/2+off-6,baseY+sag*0.5-12,12,30);
+ blob(hx,baseY+(fall>0?14:0),36,'#59BFFF',bx,baseY,false);
+ const sc=1+(inhale>0?(0.7-inhale)*0.5:0);blob(bx,baseY,46*sc,'#7A4B2A',hx,baseY,true);
+ x.fillStyle='#fff';x.font='bold 18px system-ui';x.textAlign='left';x.lineWidth=5;x.strokeStyle='#2B2340';
+ const hud='❤️'.repeat(Math.max(0,lives||0))+'  '+(score||0)+' pts  ·  manche '+(lvl||1)+'  ·  ton rythme '+Math.round((interval||0.3)*1000)+' ms';x.strokeText(hud,12,26);x.fillText(hud,12,26);
+ if(inhale>0){x.textAlign='center';x.font='bold 24px system-ui';x.strokeText('IL GONFLE !',bx,baseY-80);x.fillText('IL GONFLE !',bx,baseY-80)}
+ if(tauntT>0){x.textAlign='center';x.font='bold 20px system-ui';x.strokeText('« '+taunt+' »',W/2,H*0.2);x.fillText('« '+taunt+' »',W/2,H*0.2)}
+ x.restore()}
+function loop(now){const dt=Math.min(0.033,(now-(last||now))/1000);last=now;if(st==='play')step(dt);draw();requestAnimationFrame(loop)}
+go.addEventListener('click',()=>{reset();st='play';ui.style.display='none'});
+document.getElementById('share').addEventListener('click',async()=>{const text='J’ai fait '+(lastScore||best)+' points au tir à la corde contre Brutus 🪢 Tu fais mieux ? ';
+ try{if(navigator.share)await navigator.share({title:'Corde vs Brutus',text,url:location.href});else{await navigator.clipboard.writeText(text+location.href);document.getElementById('share').textContent='Lien copié !'}}catch(e){}});
+reset();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
