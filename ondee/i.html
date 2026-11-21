@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ondée · Duo</title>
+<meta property="og:title" content="Ondée · Duo">
+<meta property="og:description" content="Viens former un duo avec moi sur Ondée !">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { min-height: 100vh; font-family: -apple-system, "SF Pro Rounded", system-ui, sans-serif; color: #fff;
+         background: radial-gradient(circle at 50% 0%, #6b3fd1 0%, #2a1660 45%, #120a2e 100%);
+         display: flex; align-items: center; justify-content: center; padding: 24px; overflow: hidden; }
+  .etoile { position: fixed; width: 3px; height: 3px; border-radius: 50%; background: #fff; opacity: .7; animation: brille 2.4s infinite ease-in-out; }
+  @keyframes brille { 50% { opacity: .15; transform: scale(.6); } }
+  .carte { position: relative; width: 100%; max-width: 380px; text-align: center; padding: 34px 24px 28px;
+           border-radius: 32px; background: rgba(30, 16, 70, .72); border: 3px solid #45215f;
+           box-shadow: 0 0 0 2px rgba(120, 220, 255, .35), 0 0 40px rgba(255, 110, 200, .25); }
+  .duo { font-size: 64px; line-height: 1; margin-bottom: 10px; }
+  .couronne { font-size: 34px; display: block; margin-bottom: -6px; }
+  h1 { font-size: 26px; font-weight: 900; letter-spacing: .5px; margin: 8px 0 6px; }
+  h1 span { color: #ffd45e; }
+  p { font-size: 16px; line-height: 1.4; opacity: .88; margin: 6px 0 22px; }
+  a.bouton { display: block; text-decoration: none; font-weight: 900; font-size: 19px; padding: 17px 18px; border-radius: 999px;
+             margin: 12px 0; border: 3px solid #45215f; }
+  .ouvrir { background: linear-gradient(90deg, #5fd0ff, #ff78c8); color: #1b0d3a; box-shadow: 0 6px 0 #45215f; }
+  .ouvrir:active { transform: translateY(4px); box-shadow: 0 2px 0 #45215f; }
+  .store { background: #fff; color: #1b0d3a; }
+  .petit { font-size: 13px; opacity: .65; margin-top: 16px; }
+  .coeur { color: #ff78c8; }
+</style>
+</head>
+<body>
+<div class="carte">
+  <div class="duo"><span class="couronne">👑</span>🧢<span class="coeur">♥</span>🎀</div>
+  <h1 id="titre"></h1>
+  <p id="texte"></p>
+  <a class="bouton ouvrir" id="ouvrir" href="#"></a>
+  <a class="bouton store" id="store" href="https://apps.apple.com/app/id6829486318"></a>
+  <div class="petit" id="petit"></div>
+</div>
+<script>
+(function () {
+  var T = {
+    fr: ["%@ t'invite !", "Rejoins %@ sur Ondée : vous devenez binôme et vous commencez ensemble au niveau 1.", "Ouvrir dans Ondée", "Télécharger Ondée", "Pas encore le jeu ? Installe-le, puis touche à nouveau ce lien.", "Un ami"],
+    en: ["%@ invites you!", "Join %@ on Ondée: you become a duo and start level 1 together.", "Open in Ondée", "Download Ondée", "Don't have the game yet? Install it, then tap this link again.", "A friend"],
+    es: ["¡%@ te invita!", "Únete a %@ en Ondée: formaréis un dúo y empezaréis juntos en el nivel 1.", "Abrir en Ondée", "Descargar Ondée", "¿Aún no tienes el juego? Instálalo y vuelve a tocar este enlace.", "Un amigo"],
+    de: ["%@ lädt dich ein!", "Spiel mit %@ in Ondée: Ihr werdet ein Duo und startet zusammen bei Level 1.", "In Ondée öffnen", "Ondée laden", "Noch nicht installiert? Lade das Spiel und tippe dann erneut auf diesen Link.", "Ein Freund"],
+    pt: ["%@ te convidou!", "Entre com %@ no Ondée: vocês viram uma dupla e começam juntos na fase 1.", "Abrir no Ondée", "Baixar Ondée", "Ainda não tem o jogo? Instale e toque neste link de novo.", "Um amigo"],
+    ja: ["%@からの招待！", "Ondéeで%@とペアになって、いっしょにステージ1からスタートしよう。", "Ondéeで開く", "Ondéeをダウンロード", "まだゲームがない？インストールしてから、もう一度このリンクをタップしてね。", "ともだち"],
+    it: ["%@ ti invita!", "Unisciti a %@ su Ondée: diventate un duo e iniziate insieme dal livello 1.", "Apri in Ondée", "Scarica Ondée", "Non hai ancora il gioco? Installalo e poi tocca di nuovo questo link.", "Un amico"],
+    ko: ["%@님의 초대!", "Ondée에서 %@님과 듀오가 되어 1스테이지부터 함께 시작해요.", "Ondée에서 열기", "Ondée 다운로드", "아직 게임이 없나요? 설치한 뒤 이 링크를 다시 눌러 주세요.", "친구"]
+  };
+  var code = (navigator.language || "en").toLowerCase().slice(0, 2);
+  var t = T[code] || T.en;
+  var q = new URLSearchParams(location.search);
+  var d = (q.get("d") || "").replace(/[^A-Za-z0-9_\-]/g, "").slice(0, 80);
+  var n = (q.get("n") || "").slice(0, 24) || t[5];
+  document.getElementById("titre").textContent = t[0].replace("%@", n);
+  document.getElementById("texte").textContent = t[1].replace("%@", n);
+  document.getElementById("store").textContent = t[3];
+  document.getElementById("petit").textContent = t[4];
+  var lien = "ondee://rejoindre?d=" + encodeURIComponent(d) + "&n=" + encodeURIComponent(n);
+  var b = document.getElementById("ouvrir");
+  b.textContent = t[2];
+  b.href = lien;
+  if (d) { setTimeout(function () { location.href = lien; }, 400); }
+  for (var i = 0; i < 40; i++) {
+    var e = document.createElement("div");
+    e.className = "etoile";
+    e.style.left = Math.random() * 100 + "vw";
+    e.style.top = Math.random() * 100 + "vh";
+    e.style.animationDelay = (Math.random() * 2.4) + "s";
+    document.body.appendChild(e);
+  }
+})();
+</script>
+</body>
+</html>
